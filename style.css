@@ -1,0 +1,77 @@
+/* Reset dasar */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Latar belakang futuristik */
+.background {
+  height: 100vh;
+  width: 100vw;
+  background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+}
+
+/* Burung */
+.bird {
+  height: 80px;
+  width: 100px;
+  position: fixed;
+  top: 40vh;
+  left: 30vw;
+  z-index: 100;
+  filter: drop-shadow(0px 0px 10px rgba(255, 255, 255, 0.8));
+}
+
+/* Pipa dengan tampilan Metro */
+.pipe_sprite {
+  position: fixed;
+  top: 40vh;
+  left: 100vw;
+  height: 70vh;
+  width: 6vw;
+  background: linear-gradient(to bottom, #4caf50, #2e7d32);
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0px 0px 15px rgba(0, 255, 0, 0.5);
+}
+
+/* Pesan awal */
+.metro-message {
+  position: absolute;
+  z-index: 10;
+  color: white;
+  top: 30%;
+  left: 50%;
+  font-size: 2.5em;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 0px 20px rgba(255, 255, 255, 0.3);
+}
+
+.highlight {
+  color: #ffd700;
+  font-weight: bold;
+}
+
+/* Skor */
+.metro-score {
+  position: fixed;
+  z-index: 10;
+  font-size: 2rem;
+  color: #ffd700;
+  top: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 10px 20px;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.5);
+}
