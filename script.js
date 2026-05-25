@@ -1,14 +1,14 @@
 let move_speed = 3,
-  grativy = 0.5;
+  gravity = 0.5;
+
 let bird = document.querySelector(".bird");
 let img = document.getElementById("bird-1");
-let sound_point = new Audio("shound/point.mp3");
-let sound_die = new Audio("shound/die.mp3");
 
-// mendapatkan properti elemen burung
+// FIX: typo "shound" -> "sound"
+let sound_point = new Audio("sound/point.mp3");
+let sound_die = new Audio("sound/die.mp3");
+
 let bird_props = bird.getBoundingClientRect();
-
-// Metode ini mengembalikan DOMReact -> atas, kanan, bawah, kiri, x, y, lebar dan tinggi
 let background = document.querySelector(".background").getBoundingClientRect();
 
 let score_val = document.querySelector(".score_val");
@@ -19,57 +19,105 @@ let game_state = "Start";
 img.style.display = "none";
 message.classList.add("messageStyle");
 
+// FIX: pindahkan bird_dy ke luar play() agar bisa direset
+let bird_dy = 0;
+
+// FIX: tambah kontrol touch & klik untuk mobile/mouse
+function flap() {
+  if (game_state === "Play") {
+    img.src = "img/star3.png";
+    bird_dy = -7.6;
+    setTimeout(() => {
+      if (game_state === "Play") img.src = "img/star2.png";
+    }, 150);
+  }
+}
+
+// FIX: daftarkan event listener jump SEKALI di luar play()
 document.addEventListener("keydown", (e) => {
-  if (e.key == "Enter" && game_state != "Play") {
-    document.querySelectorAll(".pipe_sprite").forEach((e) => {
-      e.remove();
-    });
-    img.style.display = "block";
-    bird.style.top = "40vh";
-    game_state = "Play";
-    message.innerHTML = "";
-    score_title.innerHTML = "Score : ";
-    score_val.innerHTML = "0";
-    message.classList.remove("messageStyle");
-    play();
+  if (e.key === "ArrowUp" || e.key === " ") {
+    e.preventDefault();
+    flap();
+  }
+  if (e.key === "Enter" && game_state !== "Play") {
+    startGame();
   }
 });
 
-function play() {
-  function move() {
-    if (game_state != "Play") return;
+// FIX: kontrol tap/klik untuk mobile
+document.addEventListener("click", () => {
+  if (game_state === "Play") {
+    flap();
+  } else {
+    startGame();
+  }
+});
 
-    let pipe_sprite = document.querySelectorAll(".pipe_sprite");
-    pipe_sprite.forEach((element) => {
-      let pipe_sprite_props = element.getBoundingClientRect();
+document.addEventListener(
+  "touchstart",
+  (e) => {
+    e.preventDefault();
+    if (game_state === "Play") {
+      flap();
+    } else {
+      startGame();
+    }
+  },
+  { passive: false },
+);
+
+function startGame() {
+  document.querySelectorAll(".pipe_sprite").forEach((el) => el.remove());
+  img.style.display = "block";
+  bird.style.top = "40vh";
+  bird_dy = 0;
+  game_state = "Play";
+  message.innerHTML = "";
+  score_title.innerHTML = "Score : ";
+  score_val.innerHTML = "0";
+  message.classList.remove("messageStyle");
+  play();
+}
+
+function play() {
+  // --- GERAK PIPA ---
+  function move() {
+    if (game_state !== "Play") return;
+
+    let pipes = document.querySelectorAll(".pipe_sprite");
+    pipes.forEach((element) => {
+      let pipe_props = element.getBoundingClientRect();
       bird_props = bird.getBoundingClientRect();
 
-      if (pipe_sprite_props.right <= 0) {
+      if (pipe_props.right <= 0) {
         element.remove();
       } else {
+        // Cek tabrakan
         if (
-          bird_props.left < pipe_sprite_props.left + pipe_sprite_props.width &&
-          bird_props.left + bird_props.width > pipe_sprite_props.left &&
-          bird_props.top < pipe_sprite_props.top + pipe_sprite_props.height &&
-          bird_props.top + bird_props.height > pipe_sprite_props.top
+          bird_props.left < pipe_props.right &&
+          bird_props.right > pipe_props.left &&
+          bird_props.top < pipe_props.bottom &&
+          bird_props.bottom > pipe_props.top
         ) {
           game_state = "End";
+          // FIX: tampilkan Game Over tanpa reload
           message.innerHTML =
-            "Game Over".fontcolor("red") + "<br>Press Enter To Restart";
+            '<span style="color:red">Game Over</span><br><span style="font-size:0.6em">Enter / Tap to Restart</span>';
           message.classList.add("messageStyle");
           img.style.display = "none";
           sound_die.play();
           return;
         } else {
+          // Tambah skor saat burung melewati pipa
           if (
-            pipe_sprite_props.right < bird_props.left &&
-            pipe_sprite_props.right + move_speed >= bird_props.left &&
-            element.increase_score == "1"
+            pipe_props.right < bird_props.left &&
+            pipe_props.right + move_speed >= bird_props.left &&
+            element.increase_score === "1"
           ) {
             score_val.innerHTML = +score_val.innerHTML + 1;
             sound_point.play();
           }
-          element.style.left = pipe_sprite_props.left - move_speed + "px";
+          element.style.left = pipe_props.left - move_speed + "px";
         }
       }
     });
@@ -77,62 +125,58 @@ function play() {
   }
   requestAnimationFrame(move);
 
-  let bird_dy = 0;
+  // --- GRAVITASI ---
   function apply_gravity() {
-    if (game_state != "Play") return;
-    bird_dy = bird_dy + grativy;
-    document.addEventListener("keydown", (e) => {
-      if (e.key == "ArrowUp" || e.key == " ") {
-        img.src = "img/star3.png";
-        bird_dy = -7.6;
-      }
-    });
+    if (game_state !== "Play") return;
 
-    document.addEventListener("keyup", (e) => {
-      if (e.key == "ArrowUp" || e.key == " ") {
-        img.src = "img/star2.png";
-      }
-    });
+    bird_dy += gravity;
 
+    // FIX: game over saat menyentuh batas, tidak reload
     if (bird_props.top <= 0 || bird_props.bottom >= background.bottom) {
       game_state = "End";
-      message.style.left = "28vw";
-      window.location.reload();
-      message.classList.remove("messageStyle");
+      message.innerHTML =
+        '<span style="color:red">Game Over</span><br><span style="font-size:0.6em">Enter / Tap to Restart</span>';
+      message.classList.add("messageStyle");
+      img.style.display = "none";
+      sound_die.play();
       return;
     }
+
     bird.style.top = bird_props.top + bird_dy + "px";
     bird_props = bird.getBoundingClientRect();
     requestAnimationFrame(apply_gravity);
   }
   requestAnimationFrame(apply_gravity);
 
-  let pipe_seperation = 0;
-
-  let pipe_gap = 35;
+  // --- BUAT PIPA ---
+  let pipe_separation = 0;
+  // FIX: pipe_gap diperbesar agar lebih mudah dilewati
+  let pipe_gap = 42;
 
   function create_pipe() {
-    if (game_state != "Play") return;
+    if (game_state !== "Play") return;
 
-    if (pipe_seperation > 115) {
-      pipe_seperation = 0;
+    if (pipe_separation > 115) {
+      pipe_separation = 0;
 
-      let pipe_posi = Math.floor(Math.random() * 43) + 8;
-      let pipe_sprite_inv = document.createElement("div");
-      pipe_sprite_inv.className = "pipe_sprite";
-      pipe_sprite_inv.style.top = pipe_posi - 70 + "vh";
-      pipe_sprite_inv.style.left = "100vw";
+      let pipe_pos = Math.floor(Math.random() * 35) + 10;
 
-      document.body.appendChild(pipe_sprite_inv);
-      let pipe_sprite = document.createElement("div");
-      pipe_sprite.className = "pipe_sprite";
-      pipe_sprite.style.top = pipe_posi + pipe_gap + "vh";
-      pipe_sprite.style.left = "100vw";
-      pipe_sprite.increase_score = "1";
+      // Pipa atas
+      let pipe_top = document.createElement("div");
+      pipe_top.className = "pipe_sprite";
+      pipe_top.style.top = pipe_pos - 70 + "vh";
+      pipe_top.style.left = "100vw";
+      document.body.appendChild(pipe_top);
 
-      document.body.appendChild(pipe_sprite);
+      // Pipa bawah (yang menghitung skor)
+      let pipe_bottom = document.createElement("div");
+      pipe_bottom.className = "pipe_sprite";
+      pipe_bottom.style.top = pipe_pos + pipe_gap + "vh";
+      pipe_bottom.style.left = "100vw";
+      pipe_bottom.increase_score = "1";
+      document.body.appendChild(pipe_bottom);
     }
-    pipe_seperation++;
+    pipe_separation++;
     requestAnimationFrame(create_pipe);
   }
   requestAnimationFrame(create_pipe);
